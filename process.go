@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -16,6 +15,62 @@ import (
 	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v3"
 )
+
+func envNameFormat(s string) string {
+	items := make([]string, 0, 8)
+	start := -1
+	for i := 0; i < len(s); i++ {
+		switch {
+		case s[i] >= 'A' && s[i] <= 'Z' && (i >= 1 && s[i-1] >= 'a' && s[i-1] <= 'z') && start >= 0:
+			items = append(items, s[start:i])
+			start = i
+		case !(s[i] >= 'A' && s[i] <= 'Z') && !(s[i] >= 'a' && s[i] <= 'z'):
+			if start >= 0 && start < i {
+				items = append(items, s[start:i])
+			}
+			start = -1
+		case (s[i] >= 'A' && s[i] <= 'Z') || (s[i] >= 'a' && s[i] <= 'z'):
+			if start < 0 {
+				start = i
+			}
+		}
+	}
+	if start >= 0 && start < len(s) {
+		items = append(items, s[start:])
+	}
+	for i := 0; i < len(items); i++ {
+		items[i] = strings.ToUpper(items[i])
+	}
+	return strings.Join(items, "_")
+}
+
+func argNameFormat(s string) string {
+	items := make([]string, 0, 8)
+	start := -1
+	for i := 0; i < len(s); i++ {
+		switch {
+		case s[i] >= 'A' && s[i] <= 'Z' && (i >= 1 && s[i-1] >= 'a' && s[i-1] <= 'z') && start >= 0:
+			items = append(items, s[start:i])
+			start = i
+		case !(s[i] >= 'A' && s[i] <= 'Z') && !(s[i] >= 'a' && s[i] <= 'z'):
+			if start >= 0 && start < i {
+				items = append(items, s[start:i])
+			}
+			start = -1
+		case (s[i] >= 'A' && s[i] <= 'Z') || (s[i] >= 'a' && s[i] <= 'z'):
+			if start < 0 {
+				start = i
+			}
+		}
+	}
+	if start >= 0 && start < len(s) {
+		items = append(items, s[start:])
+	}
+	for i := 0; i < len(items); i++ {
+		items[i] = strings.ToLower(items[i])
+	}
+	return strings.Join(items, "-")
+}
 
 func getFileWithEnv(file, env string) (string, time.Time, error) {
 	if env == "" {
@@ -72,7 +127,7 @@ func parseArgument() map[string]string {
 }
 
 func processFile(config interface{}, file string, errorOnUnmatchedKeys bool) error {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -234,8 +289,8 @@ func processEnv(config interface{}, prefixes ...string) error {
 		}
 
 		if envName == "" {
-			envNames = append(envNames, strings.Join(append(prefixes, fieldStruct.Name), "_"))                  // Confo_Db_Name
-			envNames = append(envNames, strings.ToUpper(strings.Join(append(prefixes, fieldStruct.Name), "_"))) // CONFO_DB_NAME
+			envNames = append(envNames, strings.Join(append(prefixes, envNameFormat(fieldStruct.Name)), "_"))                  // Confo_Db_Name
+			envNames = append(envNames, strings.ToUpper(strings.Join(append(prefixes, envNameFormat(fieldStruct.Name)), "_"))) // CONFO_DB_NAME
 		} else {
 			for _, name := range strings.Split(envName, ",") {
 				name := name
@@ -347,13 +402,17 @@ func processArgs(config any, prefix ...string) error {
 			}
 		default:
 			var argNames []string
-			if s := fieldStruct.Tag.Get("arg"); s != "" {
-				for _, name := range strings.Split(s, ",") {
+			tag := fieldStruct.Tag.Get("arg")
+			if tag == "-" {
+				break
+			}
+			if tag != "" {
+				for _, name := range strings.Split(tag, ",") {
 					name := name
-					argNames = append(argNames, strings.Join(append(prefix, name), "-"))
+					argNames = append(argNames, name)
 				}
 			} else {
-				argNames = append(argNames, strings.Join(append(prefix, fieldStruct.Name), "-"))
+				argNames = append(argNames, strings.Join(append(prefix, argNameFormat(fieldStruct.Name)), "-"))
 			}
 			for _, name := range argNames {
 				value := argMap[name]

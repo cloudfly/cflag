@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	// Default confo instance
 	Default *Confo
 )
 
@@ -16,29 +17,30 @@ func init() {
 	if err := New(nil).Load(&c); err != nil {
 		panic(fmt.Errorf("init default Confo error: %w", err))
 	}
+	Default = New(&c)
 }
 
 type Confo struct {
-	c              *Config
-	configModTimes map[string]time.Time
+	c        *Config
+	modTimes map[string]time.Time
 }
 
 type Config struct {
-	// Environment name, Confo will auto try to load the <filename>.<env>.<ext>。
+	// Environment name, Confo will auto try to load the file <filename>.<env>.<ext>。
 	// eg. you Load a file config.yml and the this Env == testing，then confo will try to load file config.testing.yml in the directory of config.yml
-	Env string `env:"ENV" arg:"env"`
+	Env string `env:"CONFO_ENV" arg:"confo-env"`
 	// ArgPrefix set the common prefix for argument name
-	ArgPrefix string `env:"ARG_PREFIX" arg:"arg-prefix"`
+	ArgPrefix string `env:"CONFO_ARG_PREFIX" arg:"confo-arg-prefix"`
 	// EnvPrefix set the common prefix for environment name
-	EnvPrefix string `env:"ENV_PREFIX" arg:"env-prefix"`
+	EnvPrefix string `env:"CONFO_ENV_PREFIX" arg:"confo-env-prefix"`
 	// set the log func for confo, default is nil, which means drop all the message
 	LogFn func(err error, format string, v ...any)
 	// enable auto reload config files, default false
-	AutoReload bool `env:"AUTO_RELOAD" arg:"auto-reload"`
+	AutoReload bool `env:"CONFO_AUTO_RELOAD" arg:"confo-auto-reload"`
 	// time interval for checking config files, default 3 seconds.
-	AutoReloadInterval time.Duration `env:"AUTO_RELOAD_INTERVAL" arg:"auto-reload-interval"`
+	AutoReloadInterval time.Duration `env:"CONFO_AUTO_RELOAD_INTERVAL" arg:"confo-auto-reload-interval"`
 	// the callback function after reloading the config
-	AutoReloadCallback func(config interface{})
+	AutoReloadCallback func(config any)
 }
 
 // New initialize a Confo instance
@@ -55,7 +57,7 @@ func New(c *Config) *Confo {
 		c.LogFn = func(err error, format string, v ...any) {}
 	}
 
-	return &Confo{c: c}
+	return &Confo{c: c, modTimes: make(map[string]time.Time)}
 }
 
 // Load will unmarshal configurations to struct from files that you provide one by one
@@ -121,10 +123,10 @@ func (confo *Confo) load(config interface{}, watchMode bool, files ...string) (e
 	configFiles, configModTimeMap := confo.getFiles(files...)
 
 	if watchMode {
-		if len(configModTimeMap) == len(confo.configModTimes) {
+		if len(configModTimeMap) == len(confo.modTimes) {
 			var changed bool
 			for f, t := range configModTimeMap {
-				if v, ok := confo.configModTimes[f]; !ok || t.After(v) {
+				if v, ok := confo.modTimes[f]; !ok || t.After(v) {
 					changed = true
 				}
 			}
@@ -141,7 +143,7 @@ func (confo *Confo) load(config interface{}, watchMode bool, files ...string) (e
 		}
 	}
 
-	confo.configModTimes = configModTimeMap
+	confo.modTimes = configModTimeMap
 
 	if confo.c.EnvPrefix == "" || confo.c.EnvPrefix == "-" {
 		err = processEnv(config)
@@ -165,12 +167,13 @@ func (confo *Confo) load(config interface{}, watchMode bool, files ...string) (e
 	return err, true
 }
 
+// GetConfig return a copy of Config of Confo
 func (confo *Confo) GetConfig() *Config {
 	c2 := *confo.c
 	return &c2
 }
 
-// Load will unmarshal configurations to struct from files that you provide
+// Load will unmarshal configurations to struct from files that you provide by using Default Confo
 func Load(config interface{}, files ...string) error {
 	return Default.Load(config, files...)
 }
