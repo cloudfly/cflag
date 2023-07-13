@@ -116,9 +116,6 @@ func getNextArrayValue(s string) (string, string) {
 // have the same api as Array.
 type ArrayBool []bool
 
-// IsBoolFlag  implements flag.IsBoolFlag interface
-func (a *ArrayBool) IsBoolFlag() bool { return true }
-
 // String implements flag.Value interface
 func (a *ArrayBool) String() string {
 	formattedBools := make([]string, len(*a))

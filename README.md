@@ -87,6 +87,20 @@ Below is Confo's loading order, **back loading operation will overwrite previous
 4. loading environment
 5. loading arguments in command line 
 
+## Builtin basic structure
+
+Sometimes it's difficult define a value in flag or environment for array or bytes data.
+
+Confo create some comon basic data type, to make it convenient defining data for them.
+
+- Duration: time duration, support unit: s,m,h,d,M,y, such as `3d` represent 3 days;
+- Bytes: bytes, support unit: `KB, MB, GB, TB, PB, KiB, MiB, GiB, TiB, PiB`, such as `128MB`;
+- Array: string array, it can loading array from a string, which element splited by comma,  such as a,b,ccc => ['a', 'b', 'ccc']
+- ArrayBool: like Array, but element type is `bool`, it using `strconv.ParseBool` to parse string element to boolean value
+- ArrayDuration: like Array, but element type is `confo.Duration`.
+- ArrayInt: like Array, but element type is `int`.
+
+
 ## Auto Reload Mode
 
 Confo can auto reload configuration based on time
