@@ -1,9 +1,12 @@
 package confo
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -173,6 +176,66 @@ func (confo *Confo) load(config interface{}, watchMode bool, files ...string) (e
 func (confo *Confo) GetConfig() *Config {
 	c2 := *confo.c
 	return &c2
+}
+
+// RegisterFlag register arg defination in config structure to flag
+func (confo *Confo) RegisterFlag(config any) error {
+	if confo.c.ArgPrefix != "" {
+		return confo.registerFlag(config, confo.c.ArgPrefix)
+	}
+	return confo.registerFlag(config)
+}
+
+func (confo *Confo) registerFlag(config any, prefix ...string) error {
+	configValue := reflect.Indirect(reflect.ValueOf(config))
+	configType := configValue.Type()
+	if configValue.Kind() != reflect.Struct {
+		return errors.New("invalid config, should be struct")
+	}
+
+	for i := 0; i < configType.NumField(); i++ {
+		var (
+			fieldStruct = configType.Field(i)
+			field       = configValue.Field(i)
+		)
+
+		if !field.CanAddr() || !field.CanInterface() {
+			continue
+		}
+
+		for field.Kind() == reflect.Ptr {
+			field = field.Elem()
+		}
+
+		switch field.Kind() {
+		case reflect.Struct:
+			if err := confo.registerFlag(field.Addr().Interface(), append(prefix, argNameFormat(fieldStruct.Name))...); err != nil {
+				return err
+			}
+		case reflect.Slice:
+			for i := 0; i < field.Len(); i++ {
+				if reflect.Indirect(field.Index(i)).Kind() == reflect.Struct {
+					if err := confo.registerFlag(field.Index(i).Addr().Interface(), append(prefix, argNameFormat(fieldStruct.Name))...); err != nil {
+						return err
+					}
+				}
+			}
+		default:
+			var argName string
+			tag := fieldStruct.Tag.Get("arg")
+			if tag == "-" {
+				break
+			}
+			if tag != "" {
+				argName = tag
+			} else {
+				argName = strings.Join(append(prefix, argNameFormat(fieldStruct.Name)), "-")
+			}
+			flag.Var(&emptyValue{}, argName, fieldStruct.Tag.Get("help"))
+		}
+	}
+
+	return nil
 }
 
 // Load will unmarshal configurations to struct from files that you provide by using Default Confo
