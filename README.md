@@ -1,6 +1,6 @@
 # Confo
 
-Golang Configuration tool that support YAML, JSON, TOML, Shell Environment (Supports Go 1.19+)
+Golang Configuration tool that support YAML, JSON, TOML, Shell Environment, Command Line (Supports Go 1.19+)
 
 ## Usage
 
@@ -13,19 +13,14 @@ import (
 )
 
 var Config = struct {
-	APPName string `default:"app name"`
-
+	APPName string `default:"myapp"`
 	DB struct {
 		Name     string
 		User     string `default:"root"`
 		Password string `required:"true" env:"DBPassword"`
 		Port     uint   `default:"3306"`
 	}
-
-	Contacts []struct {
-		Name  string
-		Email string `required:"true"`
-	}
+	Token string `env:"TOKEN" arg:"-"`
 }{}
 
 func main() {
@@ -45,10 +40,52 @@ db:
     password: test
     port:     1234
 
-contacts:
-- name: i test
-  email: test@test.com
 ```
+
+## No file, loading from environment and command line
+
+```go
+func main() {
+	confo.Load(&Config)
+	fmt.Printf("config: %#v", Config)
+}
+```
+
+```bash
+# config the token by environment for Config.Token
+export TOKEN='your_token'
+```
+
+## Priority Order
+
+**Command line > Environment > Last file(in Load() argument) ... > First file(in Load() argument)**
+
+eg. 
+```go
+
+var Config = struct {
+	APPName string `default:"myapp"`
+	DB struct {
+		Name     string
+		User     string `default:"root"`
+		Password string `required:"true" env:"DBPassword"`
+		Port     uint   `default:"3306"`
+	}
+	Token string `env:"TOKEN" arg:"-"`
+}{}
+
+c := confo.New(&confo.Config{Env: "prod"}) // setting the env
+c.Load(&Config, "common.yml", "config.yml")
+```
+
+Below is Confo's loading order, **back loading operation will overwrite previous.**
+1. loading default value defined in structure's tag
+1. loading common.yml
+1. loading common.prod.yml if exist
+2. loading config.yml
+3. loading config.prod.yml if exist
+4. loading environment
+5. loading arguments in command line 
 
 ## Auto Reload Mode
 
@@ -56,111 +93,18 @@ Confo can auto reload configuration based on time
 
 ```go
 // auto reload configuration every second
-Confo.New(&Confo.Config{AutoReload: true}).Load(&Config, "config.json")
+confo.New(&confo.Config{AutoReload: true}).Load(&Config, "config.json")
 
 // auto reload configuration every minute
-Confo.New(&Confo.Config{AutoReload: true, AutoReloadInterval: time.Minute}).Load(&Config, "config.json")
+confo.New(&confo.Config{AutoReload: true, AutoReloadInterval: time.Minute}).Load(&Config, "config.json")
 ```
 
 Auto Reload Callback
 
 ```go
-Confo.New(&Confo.Config{AutoReload: true, AutoReloadCallback: func(config interface{}) {
+confo.New(&confo.Config{AutoReload: true, AutoReloadCallback: func(config any) {
     fmt.Printf("%v changed", config)
 }}).Load(&Config, "config.json")
-```
-
-# Advanced Usage
-
-* Load mutiple configurations
-
-```go
-// Earlier configurations have higher priority
-Confo.Load(&Config, "application.yml", "database.json")
-```
-
-* Return error on unmatched keys
-
-Return an error on finding keys in the config file that do not match any fields in the config struct.
-In the example below, an error will be returned if config.toml contains keys that do not match any fields in the ConfigStruct struct.
-If ErrorOnUnmatchedKeys is not set, it defaults to false.
-
-Note that for json files, setting ErrorOnUnmatchedKeys to true will have an effect only if using go 1.10 or later.
-
-```go
-err := Confo.New(&Confo.Config{ErrorOnUnmatchedKeys: true}).Load(&ConfigStruct, "config.toml")
-```
-
-* Load configuration by environment
-
-Use `Confo_ENV` to set environment, if `Confo_ENV` not set, environment will be `development` by default, and it will be `test` when running tests with `go test`
-
-```go
-// config.go
-Confo.Load(&Config, "config.json")
-
-$ go run config.go
-// Will load `config.json`, `config.development.json` if it exists
-// `config.development.json` will overwrite `config.json`'s configuration
-// You could use this to share same configuration across different environments
-
-$ Confo_ENV=production go run config.go
-// Will load `config.json`, `config.production.json` if it exists
-// `config.production.json` will overwrite `config.json`'s configuration
-
-$ go test
-// Will load `config.json`, `config.test.json` if it exists
-// `config.test.json` will overwrite `config.json`'s configuration
-
-$ Confo_ENV=production go test
-// Will load `config.json`, `config.production.json` if it exists
-// `config.production.json` will overwrite `config.json`'s configuration
-```
-
-```go
-// Set environment by config
-Confo.New(&Confo.Config{Environment: "production"}).Load(&Config, "config.json")
-```
-
-* Example Configuration
-
-```go
-// config.go
-Confo.Load(&Config, "config.yml")
-
-$ go run config.go
-// Will load `config.example.yml` automatically if `config.yml` not found and print warning message
-```
-
-* Load From Shell Environment
-
-```go
-$ Confo_APPNAME="hello world" Confo_DB_NAME="hello world" go run config.go
-// Load configuration from shell environment, it's name is {{prefix}}_FieldName
-```
-
-```go
-// You could overwrite the prefix with environment Confo_ENV_PREFIX, for example:
-$ Confo_ENV_PREFIX="WEB" WEB_APPNAME="hello world" WEB_DB_NAME="hello world" go run config.go
-
-// Set prefix by config
-confo.New(&confo.Config{EnvPrefix: "WEB"}).Load(&Config, "config.json")
-```
-
-* With flags
-
-```go
-func main() {
-	config := flag.String("file", "config.yml", "configuration file")
-	flag.StringVar(&Config.APPName, "name", "", "app name")
-	flag.StringVar(&Config.DB.Name, "db-name", "", "database name")
-	flag.StringVar(&Config.DB.User, "db-user", "root", "database user")
-	flag.Parse()
-
-	os.Setenv("Confo_ENV_PREFIX", "-")
-	Confo.Load(&Config, *config)
-	// Confo.Load(&Config) // only load configurations from shell env & flag
-}
 ```
 
 ## Contributing

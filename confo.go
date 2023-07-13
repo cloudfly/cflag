@@ -99,7 +99,7 @@ func (confo *Confo) getFiles(files ...string) ([]string, map[string]time.Time) {
 	var resultFiles []string
 	var modTimeMap = map[string]time.Time{}
 
-	for i := len(files) - 1; i >= 0; i-- {
+	for i := 0; i < len(files); i++ {
 		file := files[i]
 
 		// check configuration
