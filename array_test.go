@@ -94,7 +94,7 @@ func TestArrayDuration(t *testing.T) {
 	}
 	for i, v := range fooFlagDuration {
 		if v != expected[i] {
-			t.Errorf("unexpected item in array %s", v)
+			t.Errorf("unexpected item in array %v", v)
 		}
 	}
 }

@@ -2,6 +2,7 @@ package confo
 
 import (
 	"encoding/json"
+	"flag"
 	"os"
 	"reflect"
 	"testing"
@@ -246,4 +247,13 @@ func TestOverwritetestConfigurationWithArgument(t *testing.T) {
 		t.Log(result.Number)
 		t.Errorf("result should equal to original configuration")
 	}
+}
+
+func TestRegisterFlag(t *testing.T) {
+
+	err := New(nil).RegisterFlag(&testConfig{})
+	if err != nil {
+		panic(err)
+	}
+	flag.PrintDefaults()
 }
