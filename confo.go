@@ -136,6 +136,11 @@ func (confo *Confo) load(config interface{}, watchMode bool, files ...string) (e
 		}
 	}
 
+	// process defaults
+	if err := processDefault(config); err != nil {
+		return fmt.Errorf("load default error: %w", err), false
+	}
+
 	for _, file := range configFiles {
 		confo.c.LogFn(nil, "Loading configurations from file '%v'...\n", file)
 		if err = processFile(config, file, false); err != nil {
@@ -156,9 +161,6 @@ func (confo *Confo) load(config interface{}, watchMode bool, files ...string) (e
 	} else {
 		err = processArgs(config, confo.c.ArgPrefix)
 	}
-
-	// process defaults
-	processDefault(config)
 
 	if err := processRequired(config); err != nil {
 		return err, false

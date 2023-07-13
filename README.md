@@ -58,7 +58,7 @@ export TOKEN='your_token'
 
 ## Priority Order
 
-**Command line > Environment > Last file(in Load() argument) ... > First file(in Load() argument)**
+**Command line > Environment > Last file in Load() argument ... > First file in Load() argument**
 
 eg. 
 ```go

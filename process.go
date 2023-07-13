@@ -72,6 +72,13 @@ func argNameFormat(s string) string {
 	return strings.Join(items, "-")
 }
 
+func setValue(target any, content string) error {
+	if valuer, ok := target.(Value); ok {
+		return valuer.Set(content)
+	}
+	return yaml.Unmarshal([]byte(content), target)
+}
+
 func getFileWithEnv(file, env string) (string, time.Time, error) {
 	if env == "" {
 		return "", time.Now(), fmt.Errorf("no env defined")
@@ -223,7 +230,7 @@ func processDefault(config interface{}) error {
 			if isBlank := reflect.DeepEqual(field.Interface(), reflect.Zero(field.Type()).Interface()); isBlank {
 				// Set default configuration if blank
 				if value := fieldStruct.Tag.Get("default"); value != "" {
-					if err := yaml.Unmarshal([]byte(value), field.Addr().Interface()); err != nil {
+					if err := setValue(field.Addr().Interface(), value); err != nil {
 						return err
 					}
 				}
@@ -315,7 +322,7 @@ func processEnv(config interface{}, prefixes ...string) error {
 				case reflect.String:
 					field.Set(reflect.ValueOf(value))
 				default:
-					if err := yaml.Unmarshal([]byte(value), field.Addr().Interface()); err != nil {
+					if err := setValue(field.Addr().Interface(), value); err != nil {
 						return err
 					}
 				}
@@ -416,7 +423,7 @@ func processArgs(config any, prefix ...string) error {
 			}
 			for _, name := range argNames {
 				value := argMap[name]
-				if err := yaml.Unmarshal([]byte(value), field.Addr().Interface()); err != nil {
+				if err := setValue(field.Addr().Interface(), value); err != nil {
 					return err
 				}
 			}
