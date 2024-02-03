@@ -8,17 +8,19 @@ import (
 	"testing"
 )
 
-type testConfig struct {
-	APPName string `default:"confgo" json:",omitempty"`
-	Hosts   []string
+type testDatabaseConfig struct {
+	Name     string `help:"database's name"`
+	User     string `default:"root"`
+	Password string `required:"true" env:"DBPassword"`
+	Port     uint   `default:"3306" json:",omitempty"`
+	SSL      bool   `default:"true" json:",omitempty"`
+}
 
-	DB struct {
-		Name     string
-		User     string `default:"root"`
-		Password string `required:"true" env:"DBPassword"`
-		Port     uint   `default:"3306" json:",omitempty"`
-		SSL      bool   `default:"true" json:",omitempty"`
-	}
+type testConfig struct {
+	APPName string   `default:"confgo" json:",omitempty" help:"the app's name"`
+	Hosts   []string `arg:"hosts" help:"the host list of server"`
+
+	DB testDatabaseConfig
 
 	Contact struct {
 		Name  string
@@ -58,13 +60,7 @@ func generateDefaultConfig() testConfig {
 	return testConfig{
 		APPName: "confgo",
 		Hosts:   []string{"http://example.org", "http://hello.world"},
-		DB: struct {
-			Name     string
-			User     string `default:"root"`
-			Password string `required:"true" env:"DBPassword"`
-			Port     uint   `default:"3306" json:",omitempty"`
-			SSL      bool   `default:"true" json:",omitempty"`
-		}{
+		DB: testDatabaseConfig{
 			Name:     "confgo",
 			User:     "confgo",
 			Password: "confgo",

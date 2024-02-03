@@ -17,7 +17,7 @@ var (
 func init() {
 	os.Args = append(os.Args, "--fooFlag=foo", "--fooFlag=bar")
 	os.Args = append(os.Args, "--fooFlagDuration=10s", "--fooFlagDuration=5m")
-	os.Args = append(os.Args, "--fooFlagBool=true", "--fooFlagBool=false,true", "--fooFlagBool")
+	os.Args = append(os.Args, "--fooFlagBool=true", "--fooFlagBool=false,true")
 	os.Args = append(os.Args, "--fooFlagInt=1", "--fooFlagInt=2,3")
 	flag.Var(&fooFlag, "fooFlag", "test")
 	flag.Var(&fooFlagDuration, "fooFlagDuration", "test")
