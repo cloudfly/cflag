@@ -51,8 +51,6 @@ func TestDurationSetSuccess(t *testing.T) {
 		}
 	}
 	f("0", 0)
-	f("1", msecsPerMonth)
-	f("123.456", 123.456*msecsPerMonth)
 	f("1h", 3600*1000)
 	f("1.5d", 1.5*24*3600*1000)
 	f("2.3W", 2.3*7*24*3600*1000)

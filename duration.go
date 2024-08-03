@@ -13,7 +13,7 @@ import (
 //
 // DefaultValue is in months.
 func NewDuration(name string, defaultValue string, description string) *Duration {
-	description += "\nThe following optional suffixes are supported: h (hour), d (day), w (week), y (year). If suffix isn't set, then the duration is counted in months"
+	description += "\nThe following optional suffixes are supported: h (hour), d (day), w (week), m (month), y (year). If suffix isn't set, then the duration is counted in seconds"
 	d := &Duration{}
 	if err := d.Set(defaultValue); err != nil {
 		panic(fmt.Sprintf("BUG: can not parse default value %s for flag %s", defaultValue, name))
@@ -37,24 +37,18 @@ func (d *Duration) String() string {
 
 // Set implements flag.Value interface
 func (d *Duration) Set(value string) error {
-	// An attempt to parse value in months.
-	months, err := strconv.ParseFloat(value, 64)
+	// An attempt to parse value in seconds.
+	seconds, err := strconv.ParseFloat(value, 64)
 	if err == nil {
-		if months > maxMonths {
-			return fmt.Errorf("duration months must be smaller than %d; got %g", maxMonths, months)
+		if seconds < 0 {
+			return fmt.Errorf("duration seconds cannot be negative; got %g", seconds)
 		}
-		if months < 0 {
-			return fmt.Errorf("duration months cannot be negative; got %g", months)
-		}
-		d.Msecs = int64(months * msecsPerMonth)
+		d.Msecs = int64(seconds * 1000)
 		d.valueString = value
 		return nil
 	}
 	// Parse duration.
 	value = strings.ToLower(value)
-	if strings.HasSuffix(value, "m") {
-		return fmt.Errorf("duration in months must be set without `m` suffix due to ambiguity with duration in minutes; got %s", value)
-	}
 	msecs, err := PositiveDurationValue(value, 0)
 	if err != nil {
 		return err
@@ -63,10 +57,6 @@ func (d *Duration) Set(value string) error {
 	d.valueString = value
 	return nil
 }
-
-const maxMonths = 12 * 100
-
-const msecsPerMonth = 31 * 24 * 3600 * 1000
 
 // PositiveDurationValue returns positive duration in milliseconds for the given s
 // and the given step.
@@ -156,6 +146,8 @@ func parseSingleDuration(s string, step int64) (float64, error) {
 		mp = 24 * 60 * 60
 	case "w":
 		mp = 7 * 24 * 60 * 60
+	case "M":
+		mp = 730 * 24 * 60 * 60
 	case "y":
 		mp = 365 * 24 * 60 * 60
 	case "i":

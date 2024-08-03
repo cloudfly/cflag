@@ -1,6 +1,8 @@
 package main
 
-import "github.com/cloudfly/confo"
+import (
+	"github.com/cloudfly/confo"
+)
 
 type Level string
 
@@ -17,10 +19,16 @@ type Config struct {
 	} `yaml:"server"`
 }
 
+var (
+	logFile    = confo.NewString("log.file", "", "the log file")
+	logLevel   = confo.NewBool("log.level", false, "the log level, default is bool")
+	serverHost = confo.NewString("server.addr", ":7070", "the address http will serve on")
+	serverPort = confo.NewInt("server.port", 8080, "the tcp port will listen on")
+)
+
 func main() {
-	var c Config
-	err := confo.Load(&c)
-	if err != nil {
-		panic(err)
-	}
+	confo.Parse()
+
+	confo.Usage("log.file")
+
 }
