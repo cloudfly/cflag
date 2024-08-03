@@ -10,7 +10,7 @@ import (
 
 // NewArrayString returns new ArrayString with the given name and description.
 func NewArrayString(name, description string) *ArrayString {
-	description += "\nSupports an `array` of values separated by comma or specified via multiple flags."
+	description += "\nSupports an `array` of values separated by comma or specified via multiple flags." + envHelp(name)
 	var a ArrayString
 	flag.Var(&a, name, description)
 	return &a
@@ -18,7 +18,7 @@ func NewArrayString(name, description string) *ArrayString {
 
 // NewArrayDuration returns new ArrayDuration with the given name and description.
 func NewArrayDuration(name, description string) *ArrayDuration {
-	description += "\nSupports `array` of values separated by comma or specified via multiple flags."
+	description += "\nSupports `array` of values separated by comma or specified via multiple flags." + envHelp(name)
 	var a ArrayDuration
 	flag.Var(&a, name, description)
 	return &a
@@ -26,7 +26,7 @@ func NewArrayDuration(name, description string) *ArrayDuration {
 
 // NewArrayBool returns new ArrayBool with the given name and description.
 func NewArrayBool(name, description string) *ArrayBool {
-	description += "\nSupports `array` of values separated by comma or specified via multiple flags."
+	description += "\nSupports `array` of values separated by comma or specified via multiple flags." + envHelp(name)
 	var a ArrayBool
 	flag.Var(&a, name, description)
 	return &a
@@ -34,7 +34,7 @@ func NewArrayBool(name, description string) *ArrayBool {
 
 // NewArrayInt returns new ArrayInt with the given name and description.
 func NewArrayInt(name, description string) *ArrayInt {
-	description += "\nSupports `array` of values separated by comma or specified via multiple flags."
+	description += "\nSupports `array` of values separated by comma or specified via multiple flags." + envHelp(name)
 	var a ArrayInt
 	flag.Var(&a, name, description)
 	return &a
@@ -43,7 +43,7 @@ func NewArrayInt(name, description string) *ArrayInt {
 // NewArrayBytes returns new ArrayBytes with the given name and description.
 func NewArrayBytes(name, description string) *ArrayBytes {
 	description += "\nSupports the following optional suffixes for size values: KB, MB, GB, TB, KiB, MiB, GiB, TiB."
-	description += "\nSupports `array` of values separated by comma or specified via multiple flags."
+	description += "\nSupports `array` of values separated by comma or specified via multiple flags." + envHelp(name)
 	var a ArrayBytes
 	flag.Var(&a, name, description)
 	return &a

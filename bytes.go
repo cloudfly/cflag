@@ -10,7 +10,7 @@ import (
 
 // NewBytes returns new `bytes` flag with the given name, defaultValue and description.
 func NewBytes(name string, defaultValue int64, description string) *Bytes {
-	description += "\nSupports the following optional suffixes for `size` values: KB, MB, GB, TB, KiB, MiB, GiB, TiB"
+	description += "\nSupports the following optional suffixes for `size` values: KB, MB, GB, TB, KiB, MiB, GiB, TiB." + envHelp(name)
 	b := Bytes{
 		N:           defaultValue,
 		valueString: fmt.Sprintf("%d", defaultValue),

@@ -85,5 +85,9 @@ func ParseFlagSet(fs *flag.FlagSet, args []string) {
 func getEnvFlagName(s string) string {
 	// Substitute dots with underscores, since env var names cannot contain dots.
 	// See https://github.com/VictoriaMetrics/VictoriaMetrics/issues/311#issuecomment-586354129 for details.
-	return *envPrefix + strings.ReplaceAll(s, ".", "_")
+	return strings.ToUpper(*envPrefix + strings.ReplaceAll(s, ".", "_"))
+}
+
+func envHelp(s string) string {
+	return fmt.Sprintf("(env: %s)", getEnvFlagName(s))
 }
