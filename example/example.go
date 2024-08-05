@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/cloudfly/confo"
-)
+import "github.com/cloudfly/confo"
 
 type Level string
 
