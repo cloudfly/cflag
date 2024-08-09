@@ -1,4 +1,4 @@
-package confo
+package cflag
 
 import (
 	"testing"
