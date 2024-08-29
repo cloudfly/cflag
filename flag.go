@@ -1,4 +1,4 @@
-package cflag
+package flagx
 
 import (
 	"flag"
